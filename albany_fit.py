@@ -8,10 +8,11 @@ from mesa.space import NetworkGrid
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+import pandas as pd
 
 import logging
 logFormatter = '%(asctime)s - %(levelname)s - %(message)s'
-logging.basicConfig(format=logFormatter, level=logging.DEBUG)
+logging.basicConfig(format=logFormatter, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class State(Enum):
@@ -85,7 +86,7 @@ class Population(Model):
             a.status = State.EXPOSED
 
         self.datacollector.collect(self)
-        print("Model initialized...\n")
+        print("Model initialized...\n", str(self.model_parameters))
 
     def step(self):
         self.datacollector.collect(self)
@@ -93,7 +94,7 @@ class Population(Model):
 
     def run(self, n):
         for i in range(n):
-            logger.info("Steps Completed: " + str(i))
+            #logger.info("Steps Completed: " + str(i))
             #print("Steps completed: ", i)
             self.step()
 
@@ -154,23 +155,52 @@ class Person(Agent):
             self.ay_to_r()
 
 
-model_parameters = {
-    'population_size': 10000,
-    'initial_outbreak_size': 10,
-    'alpha': 0.7,
-    'spread_chance': 0.005,
-    'EAY': 1/5,
-    'AR': 1/5,
-    'YR': 1/5,
-}
-graph = nx.powerlaw_cluster_graph(model_parameters['population_size'], 100, 0.01)
+def mse(a,b):
+    return ((a-b)**2).mean()
+
+
+def evaluate_model(graph, spread_chance, alpha):
+    model_parameters = {
+        'population_size': 97000,
+        'initial_outbreak_size': 7,
+        'alpha': alpha,
+        'spread_chance': spread_chance,
+        'EAY': 1/5,
+        'AR': 1/5,
+        'YR': 1/5,
+    }
+    model = Population(graph, model_parameters)
+    model.run(48)
+    df = model.datacollector.get_model_vars_dataframe()
+    cases = albany_population - np.array(df['Susceptible'])
+    #return mse(albany_data, model_results), cases
+    return cases
+
+
+albany_population = 97000
 logger.info("Initialized graph")
-model = Population(graph, model_parameters)
-model.run(60)
-df = model.datacollector.get_model_vars_dataframe()
-print(df.head())
-df.plot()
-plt.title("Power Law Distribution")
-plt.grid(b=True, which='major')
-plt.minorticks_on()
+graph = nx.powerlaw_cluster_graph(albany_population, 100, 0.01)
+
+df = pd.read_csv('Data/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv')
+ny_data = df.loc[df['Province_State'] == 'New York']
+albany_data = ny_data.loc[df['Admin2'] == 'Albany']
+
+Extra_columns = ['UID', 'iso2', 'iso3', 'code3', 'FIPS', 'Admin2', 'Province_State', 'Country_Region', 'Lat', 'Long_', 'Combined_Key']
+albany_data = albany_data.drop(Extra_columns, axis=1)
+albany_data = np.array(albany_data)[0]
+albany_data = albany_data[albany_data > 0]
+
+min_error = 1e10
+
+for spread_chance in np.linspace(0.0005, 0.001, 5):
+    for alpha in np.linspace(0.6, 0.8, 5):
+        model_results = evaluate_model(graph, spread_chance, alpha)
+        error = mse(albany_data, model_results)
+        if error < min_error:
+            opt_params, results = (spread_chance, alpha), model_results
+
+print("Optimal Params: spread_chance=%f, alpha=%f" % opt_params)
+plt.plot(albany_data)
+plt.plot(results)
 plt.show()
+
