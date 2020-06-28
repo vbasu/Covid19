@@ -114,9 +114,9 @@ class Person(Agent):
 model = Population(1000, 10, 0.005)
 model.run(25)
 df = model.datacollector.get_model_vars_dataframe()
-print(model.graph.edges)
-#print(df.head())
-#df.plot()
+#print(model.graph.edges)
+print(df.head())
+df.plot()
 '''
 nx.draw(model.graph)
 options = {"node_size": 10, "alpha": 0.8}
@@ -132,5 +132,7 @@ nx.draw_networkx_edges(
     edge_color='r'
 )
 '''
-plt.axis("off")
+plt.grid(b=True, which='major')
 plt.show()
+
+
