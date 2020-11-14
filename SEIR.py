@@ -31,28 +31,35 @@ def count_exposed(model):
     statuses = [agent.status for agent in model.schedule.agents]
     return len([x for x in statuses if x == State.EXPOSED])
 
+
 def count_asymptomatic(model):
     statuses = [agent.status for agent in model.schedule.agents]
     return len([x for x in statuses if x == State.ASYMPTOMATIC])
+
 
 def count_symptomatic(model):
     statuses = [agent.status for agent in model.schedule.agents]
     return len([x for x in statuses if x == State.SYMPTOMATIC])
 
+
 def count_susceptible(model):
     statuses = [agent.status for agent in model.schedule.agents]
     return len([x for x in statuses if x == State.SUSCEPTIBLE])
+
 
 def count_recovered(model):
     statuses = [agent.status for agent in model.schedule.agents]
     return len([x for x in statuses if x == State.RECOVERED])
 
+
 def count_diseased(model):
     return count_exposed(model) + count_asymptomatic(model) + count_symptomatic(model)
+
 
 def count_removed(model):
     statuses = [agent.status for agent in model.schedule.agents]
     return len([x for x in statuses if x == State.REMOVED])
+
 
 def load_model(filename):
     """
@@ -66,6 +73,7 @@ def load_model(filename):
         model = pickle.load(f)
     model.reinstate_social_distancing_func(sdf)
     return model
+
 
 class Population(Model):
     """Population
@@ -92,11 +100,11 @@ class Population(Model):
         self.schedule = SimultaneousActivation(self)
         self.social_distancing_func = social_distancing_func
 
-        self.datacollector = DataCollector({#"Exposed": count_exposed,
+        self.datacollector = DataCollector({  # "Exposed": count_exposed,
                                             "Susceptible": count_susceptible,
                                             "Recovered": count_recovered,
-                                            #"Asymptomatic": count_asymptomatic,
-                                            #"Symptomatic": count_symptomatic,
+                                            # "Asymptomatic": count_asymptomatic,
+                                            # "Symptomatic": count_symptomatic,
                                             "Diseased": count_diseased,
                                             "Removed": count_removed
                                             })
@@ -142,7 +150,6 @@ class Population(Model):
                     break
             steps += 1
 
-
     def cross_influence(self, influence_coefficients, ratios):
         for inf_coeff, ratio in zip(influence_coefficients, ratios):
             susceptibles = list(filter(lambda x: x.status == State.SUSCEPTIBLE, self.grid.get_all_cell_contents()))
@@ -184,11 +191,13 @@ class Population(Model):
     def get_data(self):
         return self.datacollector.get_model_vars_dataframe()
 
+    '''
     def plot_social_distancing_func(self):
         sdf_values = [social_distancing_func_simple(t) for t in range(0, len(self.get_data()))]
         fig, ax = plt.subplots()
         ax.plot(range(0, self.get_data().count), sdf_values)
         plt.show()
+    '''
 
 
 class Person(Agent):
@@ -271,6 +280,7 @@ class Person(Agent):
         self.days_passed += 1
 
 
+'''
 if __name__ == "__main__":
     model_parameters = {
         'population size': 10000,
@@ -326,3 +336,4 @@ if __name__ == "__main__":
     #plt.yscale('log')
     #plt.minorticks_on()
     plt.show()
+'''

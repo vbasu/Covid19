@@ -18,12 +18,14 @@ def load_model(filename):
     :return: metapopualtion model
     """
     with open(filename + ".dil", 'rb') as f:
-        sdf = dill.load(f)
+        m = dill.load(f)
+    '''
     with open(filename + ".pkl", 'rb') as f:
         model = pickle.load(f)
-    for population in populations:
+    for population in model.populations:
         population.reinstate_social_distancing_func(sdf)
-    return model
+    '''
+    return m
 
 
 class MetaPopulation():
@@ -68,13 +70,15 @@ class MetaPopulation():
         :return:  none
         """
         with open(filename + ".dil", 'wb') as f:
-            dill.dump(self.populations[0].social_distancing_func, f)
+            dill.dump(self, f)
+            #dill.dump(self.populations[0].social_distancing_func, f)
 
+        '''
         for population in populations:
             population.clear_social_distancing_func()
         with open(filename + ".pkl", 'wb') as f:
             pickle.dump(self, f)
-
+        '''
 
 if __name__ == "__main__":
     cross_influence_matrix = [[0, 0.1],
@@ -102,8 +106,10 @@ if __name__ == "__main__":
         populations.append(model)
 
     meta_population = MetaPopulation(populations, cross_influence_matrix)
-    meta_population.run(30)
+    meta_population.run(100)
 
+    meta_population.save_model("Models/meta_population_test")
+    '''
     fig, axs = plt.subplots(len(cross_influence_matrix))
     dfs = [pop.datacollector.get_model_vars_dataframe() for pop in meta_population.populations]
     for ax, df in zip(axs,dfs):
@@ -116,3 +122,4 @@ if __name__ == "__main__":
     fig.tight_layout(pad=1.0)
     #plt.grid(b=True, which='major')
     plt.show()
+    '''
